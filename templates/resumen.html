@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumen Climático</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f7f7f7; }
+    </style>
+</head>
+<body>
+    <h1>Resumen Climático General</h1>
+    <div id="resumen-global"></div>
+    <h2>Por estación</h2>
+    <table id="tabla-estaciones">
+        <thead>
+            <tr>
+                <th>Estación</th>
+                <th>Cantidad Datos</th>
+                <th>Temperatura Promedio (°C)</th>
+                <th>Temperatura Máxima (°C)</th>
+                <th>Año más caluroso</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        fetch('/api/resumen/')
+            .then(response => response.json())
+            .then(data => {
+                const resumenDiv = document.getElementById('resumen-global');
+                resumenDiv.innerHTML = `
+                    <p><strong>Total de registros:</strong> ${data.total_registros}</p>
+                    <p><strong>Número de estaciones:</strong> ${data.numero_estaciones}</p>
+                    <p><strong>Rango de años:</strong> ${data.rango_anios[0]} - ${data.rango_anios[1]}</p>
+                `;
+
+                const tbody = document.querySelector('#tabla-estaciones tbody');
+                data.estaciones.forEach(estacion => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${estacion.estacion}</td>
+                        <td>${estacion.cantidad_datos}</td>
+                        <td>${estacion.temperatura_promedio}</td>
+                        <td>${estacion.temperatura_maxima}</td>
+                        <td>${estacion.anio_mas_caluroso}</td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+            })
+            .catch(error => {
+                document.body.innerHTML = '<p>Error cargando resumen.</p>';
+                console.error(error);
+            });
+    </script>
+</body>
+</html>
