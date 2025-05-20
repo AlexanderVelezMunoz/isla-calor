@@ -24,13 +24,17 @@ def mapa_idw(request):
 
     mapa = folium.Map(location=[6.25, -75.58], zoom_start=11)
 
-    # Marcadores estaciones
-    for _, row in df.iterrows():
+    colores = ['red', 'blue', 'green', 'orange', 'purple', 'darkred', 'cadetblue']
+
+    # Marcadores estaciones con color diferente
+    for i, (_, row) in enumerate(df.iterrows()):
+        color = colores[i % len(colores)]
         folium.CircleMarker(
             location=[row['Latitud'], row['Longitud']],
-            radius=4,
-            color='black',
+            radius=5,
+            color=color,
             fill=True,
+            fill_color=color,
             fill_opacity=0.9,
             popup=f"{row['Estacion']}<br>{round(row['Promedio_Temp'], 2)} °C"
         ).add_to(mapa)
