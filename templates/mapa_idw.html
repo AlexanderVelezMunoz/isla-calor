@@ -2,38 +2,54 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>Mapa IDW</title>
+    <title>Mapa IDW Interpolación</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        #mapa-container {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
 </head>
-<body>
-    <h2>Mapa temperatura interpolada - Año: <span id="anio-actual">{{ ano }}</span></h2>
+<body class="bg-light">
 
-    <button id="btn-anio-anterior">Año anterior</button>
-    <button id="btn-anio-siguiente">Año siguiente</button>
+<div class="container py-4">
 
-    <div style="width: 100%; height: 600px;">
+    <h1 class="mb-4">Mapa IDW - Temperatura Promedio</h1>
+
+    <div class="d-flex align-items-center mb-3">
+        <label for="selectYear" class="me-2">Selecciona Año:</label>
+        <select id="selectYear" class="form-select w-auto me-3">
+            {% for y in range_anos %}
+                <option value="{{ y }}" {% if y == ano %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button id="btnActualizar" class="btn btn-primary">Actualizar</button>
+    </div>
+
+    <div id="mapa-container">
         {{ mapa|safe }}
     </div>
 
-    <script>
-        // Lista de años y año actual recibidos desde Django
-        const anos = {{ anos_disponibles|safe }};
-        let anoActual = {{ ano }};
+</div>
 
-        document.getElementById('btn-anio-anterior').addEventListener('click', () => {
-            let idx = anos.indexOf(anoActual);
-            if (idx > 0) {
-                anoActual = anos[idx - 1];
-                window.location.href = '?ano=' + anoActual;
-            }
+<script>
+    $(document).ready(function(){
+        $('#btnActualizar').click(function() {
+            const year = $('#selectYear').val();
+            $.get(window.location.pathname, { ano: year }, function(data) {
+                const nuevoMapa = $(data).find('#mapa-container').html();
+                $('#mapa-container').html(nuevoMapa);
+            });
         });
+    });
+</script>
 
-        document.getElementById('btn-anio-siguiente').addEventListener('click', () => {
-            let idx = anos.indexOf(anoActual);
-            if (idx < anos.length - 1) {
-                anoActual = anos[idx + 1];
-                window.location.href = '?ano=' + anoActual;
-            }
-        });
-    </script>
 </body>
 </html>
