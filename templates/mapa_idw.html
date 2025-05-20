@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mapa IDW</title>
+</head>
+<body>
+    <h2>Mapa temperatura interpolada - Año: <span id="anio-actual">{{ ano }}</span></h2>
+
+    <button id="btn-anio-anterior">Año anterior</button>
+    <button id="btn-anio-siguiente">Año siguiente</button>
+
+    <div style="width: 100%; height: 600px;">
+        {{ mapa|safe }}
+    </div>
+
+    <script>
+        // Lista de años y año actual recibidos desde Django
+        const anos = {{ anos_disponibles|safe }};
+        let anoActual = {{ ano }};
+
+        document.getElementById('btn-anio-anterior').addEventListener('click', () => {
+            let idx = anos.indexOf(anoActual);
+            if (idx > 0) {
+                anoActual = anos[idx - 1];
+                window.location.href = '?ano=' + anoActual;
+            }
+        });
+
+        document.getElementById('btn-anio-siguiente').addEventListener('click', () => {
+            let idx = anos.indexOf(anoActual);
+            if (idx < anos.length - 1) {
+                anoActual = anos[idx + 1];
+                window.location.href = '?ano=' + anoActual;
+            }
+        });
+    </script>
+</body>
+</html>
