@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa IDW - Medellín</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        select, button {
+            font-size: 16px;
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        img {
+            max-width: 90%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualizador de Isla de Calor Urbana - Medellín</h1>
+
+    <form method="get" action="{% url 'generar_mapa' %}">
+        <select name="anio">
+            {% for a in anios %}
+                <option value="{{ a }}" {% if anio_seleccionado == a %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+        <select name="mes">
+            {% for m in meses %}
+                <option value="{{ m.numero }}" {% if mes_seleccionado == m.numero %}selected{% endif %}>{{ m.nombre }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Generar mapa</button>
+    </form>
+
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if imagen_url %}
+        <h2>Mapa generado:</h2>
+        <img src="{{ imagen_url }}" alt="Mapa IDW">
+    {% endif %}
+
+</body>
+</html>
