@@ -11,7 +11,11 @@ SECRET_KEY = 'django-insecure-<tu-clave-aqui>'
 # Solo para desarrollo: True
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'web-production-352b9.up.railway.app'
+]
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [

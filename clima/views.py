@@ -12,7 +12,6 @@ from django.shortcuts import render
 from django.conf import settings
 from shapely.vectorized import contains
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import contextily as ctx
 from matplotlib.patches import Polygon, Patch
 from matplotlib.ticker import MaxNLocator
 
@@ -102,7 +101,6 @@ def generar_mapa(request):
         patch = Polygon(np.array(geom.exterior.coords), facecolor='none', transform=ax.transData)
         im.set_clip_path(patch)
 
-    ctx.add_basemap(ax, crs="EPSG:3857", source=ctx.providers.OpenStreetMap.Mapnik, zorder=0)
     gdf_vecinos.boundary.plot(ax=ax, edgecolor='gray', linestyle='--', linewidth=0.8, zorder=2)
     gdf_comunas.boundary.plot(ax=ax, edgecolor='black', linewidth=0.6, zorder=3)
     df_mes_proj.plot(ax=ax, facecolor='white', edgecolor='black', markersize=60, zorder=4)
