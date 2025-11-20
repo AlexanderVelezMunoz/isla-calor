@@ -40,5 +40,6 @@ RUN python manage.py collectstatic --noinput
 EXPOSE 8000
 
 # INICIAR Gunicorn apuntando al proyecto correcto
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
+CMD ["gunicorn", "isla_calor.wsgi:application", "--bind", "0.0.0.0:8000"]
+
 
