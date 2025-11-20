@@ -1,2 +1,2 @@
 release: python manage.py migrate
-web: gunicorn backend.wsgi:application
+web: gunicorn osla-calor.wsgi:application
