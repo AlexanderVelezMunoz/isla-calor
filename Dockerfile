@@ -19,31 +19,27 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Variables para GDAL
-ENV GDAL_VERSION=3.9.3
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 
-# Carpeta principal
+# Carpeta del proyecto
 WORKDIR /app
 
 # Copiar requirements
 COPY requirements.txt .
 
-# Instalar dependencias Python
+# Instalar dependencias de Python
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copiar el proyecto
+# Copiar código completo
 COPY . .
 
 # Recolectar archivos estáticos
-RUN python backend/manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
-# Railway usa esta variable automáticamente
-ENV PORT=8000
-
-# Exponer puerto
+# Puerto
 EXPOSE 8000
 
-# Ejecutar Gunicorn con el módulo correcto
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
+# Comando de arranque
+CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
