@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 # BASE_DIR: raíz del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'clima',  # tu app
+    'clima',  
+    'whitenoise.runserver_nostatic',
 ]
 
-# Middleware
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,11 +62,13 @@ ASGI_APPLICATION = 'backend.asgi.application'
 
 # Base de datos SQLite
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',
+        conn_max_age=600,
+        ssl_require=False
+    )
 }
+
 
 # Validadores de contraseña
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,3 +104,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Configuración por defecto del campo auto
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATIC_ROOT = BASE_DIR / "staticfiles_build"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
