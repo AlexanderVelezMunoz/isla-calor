@@ -1,58 +1,207 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Mapa IDW - Medellín</title>
+
     <style>
+
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
             text-align: center;
         }
-        form {
+
+        .container {
+            width: 95%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #1f2937;
+        }
+
+        .formulario {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        select, button {
-            font-size: 16px;
-            padding: 5px 10px;
-            margin: 5px;
+
+        form {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        img {
-            max-width: 90%;
-            height: auto;
+
+        select, button {
+
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 6px;
             border: 1px solid #ccc;
         }
+
+        button {
+
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+
+            background-color: #1d4ed8;
+        }
+
         .error {
+
             color: red;
             font-weight: bold;
+            margin-top: 15px;
         }
+
+        .mapa-container {
+
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+        }
+
+        img {
+
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .info {
+
+            margin-top: 10px;
+            color: #444;
+            font-size: 15px;
+        }
+
     </style>
+
 </head>
+
 <body>
-    <h1>Visualizador de Isla de Calor Urbana - Medellín</h1>
 
-    <form method="get" action="{% url 'generar_mapa' %}">
-        <select name="anio">
-            {% for a in anios %}
-                <option value="{{ a }}" {% if anio_seleccionado == a %}selected{% endif %}>{{ a }}</option>
-            {% endfor %}
-        </select>
-        <select name="mes">
-            {% for m in meses %}
-                <option value="{{ m.numero }}" {% if mes_seleccionado == m.numero %}selected{% endif %}>{{ m.nombre }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Generar mapa</button>
-    </form>
+    <div class="container">
 
+        <h1>
+            Sistema de Análisis de Isla de Calor Urbana Superficial
+        </h1>
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
+        <div class="formulario">
 
-    {% if imagen_url %}
-        <h2>Mapa generado:</h2>
-        <img src="{{ imagen_url }}" alt="Mapa IDW">
-    {% endif %}
+            <form method="get" action="{% url 'generar_mapa' %}">
+
+                <!-- Año -->
+                <select name="anio">
+
+                    {% for a in anios %}
+
+                        <option value="{{ a }}"
+                            {% if anio_seleccionado == a %}selected{% endif %}>
+
+                            {{ a }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <!-- Mes -->
+                <select name="mes">
+
+                    {% for m in meses %}
+
+                        <option value="{{ m.numero }}"
+                            {% if mes_seleccionado == m.numero %}selected{% endif %}>
+
+                            {{ m.nombre }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <!-- Comuna -->
+                <select name="comuna">
+
+                    <option value="Todas">
+                        Todas las comunas
+                    </option>
+
+                    {% for c in comunas %}
+
+                        <option value="{{ c }}"
+                            {% if comuna_seleccionada == c %}selected{% endif %}>
+
+                            {{ c }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <button type="submit">
+                    Generar mapa
+                </button>
+
+            </form>
+
+            {% if error %}
+
+                <p class="error">
+                    {{ error }}
+                </p>
+
+            {% endif %}
+
+        </div>
+
+        {% if mapa_url %}
+
+            <div class="mapa-container">
+
+                <h2>
+                    Resultado del análisis térmico
+                </h2>
+
+                <img src="{{ mapa_url }}" alt="Mapa IDW">
+
+                <div class="info">
+
+                    <p>
+                        Visualización espacial de temperatura promedio mensual
+                        interpolada mediante método IDW.
+                    </p>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
 
 </body>
+
 </html>

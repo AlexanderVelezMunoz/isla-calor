@@ -116,3 +116,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_ROOT = BASE_DIR / "staticfiles_build"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Redirección después del login
+LOGIN_REDIRECT_URL = '/mapa_idw/'  # o la página principal de tu sistema
+LOGOUT_REDIRECT_URL = '/login/'
