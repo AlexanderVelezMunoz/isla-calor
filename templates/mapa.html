@@ -1,32 +1,227 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
-    <title>Mapa de Isla de Calor Urbana</title>
+
+    <title>
+        Sistema SIG - Isla de Calor Urbana
+    </title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+
+            font-family: Arial, sans-serif;
+            background:#eef2f7;
+            color:#1e293b;
+        }
+
+        .hero{
+
+            background:linear-gradient(
+                135deg,
+                #0f172a,
+                #111827
+            );
+
+            color:white;
+            padding:70px 20px;
+            text-align:center;
+        }
+
+        .hero h1{
+
+            font-size:58px;
+            margin-bottom:20px;
+        }
+
+        .hero p{
+
+            font-size:22px;
+            color:#dbeafe;
+        }
+
+        .contenedor{
+
+            width:95%;
+            margin:auto;
+            margin-top:-40px;
+        }
+
+        .panel{
+
+            background:white;
+            border-radius:25px;
+            padding:40px;
+            box-shadow:0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        form{
+
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            gap:20px;
+        }
+
+        select{
+
+            padding:18px;
+            border-radius:14px;
+            border:1px solid #cbd5e1;
+            font-size:18px;
+            min-width:250px;
+        }
+
+        button{
+
+            background:#2563eb;
+            color:white;
+            border:none;
+            border-radius:14px;
+            padding:18px 35px;
+            font-size:20px;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        button:hover{
+
+            background:#1d4ed8;
+        }
+
+        .resultado{
+
+            margin-top:40px;
+            text-align:center;
+        }
+
+        .resultado h2{
+
+            margin-bottom:20px;
+            font-size:35px;
+        }
+
+        .resultado img{
+
+            width:95%;
+            border-radius:20px;
+            border:2px solid #cbd5e1;
+            box-shadow:0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .footer{
+
+            text-align:center;
+            margin:50px 0 20px 0;
+            color:#64748b;
+            font-size:16px;
+        }
+
+    </style>
+
 </head>
-<body style="font-family: Arial; text-align: center; padding: 50px">
-    <h1>Mapa de Isla de Calor Urbana</h1>
-    <form method="get">
-        <label for="anio">Año:</label>
-        <select name="anio" id="anio">
-            {% for y in anios %}
-                <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-        </select>
 
-        <label for="mes">Mes:</label>
-        <select name="mes" id="mes">
-            {% for m in meses %}
-                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
-            {% endfor %}
-        </select>
+<body>
 
-        <button type="submit">Generar Mapa</button
-    </form>
+    <section class="hero">
 
-    {% if imagen_url %}
-        <h2>ISLA DE CALOR URBANA SUPERFICIAL - Medellín - {{ anio }} / {{ mes }}</h2>
-        <img src="{{ imagen_url }}" alt="Mapa IDW" style="max-width: 90%; border: 1px solid #ccc;">
-    {% endif %}
+        <h1>
+
+            Sistema de Análisis de Isla de Calor Urbana Superficial
+
+        </h1>
+
+        <p>
+
+            Plataforma SIG para análisis térmico espacial mediante interpolación IDW
+
+        </p>
+
+    </section>
+
+    <div class="contenedor">
+
+        <div class="panel">
+
+            <form method="GET">
+
+                <select name="anio" id="anio">
+
+                    {% for y in anios %}
+
+                        <option value="{{ y }}"
+                        {% if y == anio %}selected{% endif %}>
+
+                            {{ y }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <select name="mes" id="mes">
+
+                    {% for m in meses %}
+
+                        <option value="{{ m }}"
+                        {% if m == mes %}selected{% endif %}>
+
+                            {{ m }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <button type="submit">
+
+                    Generar mapa
+
+                </button>
+
+            </form>
+
+        </div>
+
+        {% if imagen_url %}
+
+        <div class="panel resultado">
+
+            <h2>
+
+                ISLA DE CALOR URBANA SUPERFICIAL
+                Medellín - {{ anio }} / {{ mes }}
+
+            </h2>
+
+            <img src="{{ imagen_url }}"
+                 alt="Mapa IDW">
+
+        </div>
+
+        {% endif %}
+
+        <div class="footer">
+
+            Alexander Vélez Muñoz —
+            Tecnológico de Antioquia —
+            Ingeniería de Software
+
+        </div>
+
+    </div>
+
 </body>
+
 </html>

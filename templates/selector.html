@@ -2,95 +2,360 @@
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Mapa IDW - Medellín</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Sistema SIG - Isla de Calor Urbana
+    </title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
     <style>
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-            text-align: center;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        .container {
-            width: 95%;
-            margin: auto;
-            padding: 20px;
+        body{
+
+            font-family:'Poppins',sans-serif;
+
+            background:
+            linear-gradient(
+                135deg,
+                #e8eef5,
+                #dce6f2
+            );
+
+            min-height:100vh;
+
+            color:#1e293b;
         }
 
-        h1 {
-            margin-top: 20px;
-            color: #1f2937;
+        /* ================= HEADER ================= */
+
+        .header{
+
+            background:
+            linear-gradient(
+                135deg,
+                #0f172a,
+                #1e3a5f
+            );
+
+            color:white;
+
+            padding:35px 20px;
+
+            text-align:center;
+
+            box-shadow:
+            0 4px 20px rgba(0,0,0,0.15);
         }
 
-        .formulario {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        .header h1{
+
+            font-size:38px;
+
+            margin-bottom:10px;
+
+            font-weight:700;
         }
 
-        form {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
+        .header p{
+
+            font-size:16px;
+
+            opacity:0.9;
         }
 
-        select, button {
+        .badge{
 
-            font-size: 16px;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            margin-top:18px;
+
+            display:inline-block;
+
+            background:rgba(255,255,255,0.12);
+
+            padding:10px 18px;
+
+            border-radius:30px;
+
+            font-size:14px;
+
+            backdrop-filter:blur(10px);
         }
 
-        button {
+        .logout-container{
 
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: 0.3s;
+            margin-top:20px;
         }
 
-        button:hover {
+        .logout-btn{
 
-            background-color: #1d4ed8;
+            background:#dc2626;
+
+            color:white;
+
+            border:none;
+
+            padding:10px 18px;
+
+            border-radius:10px;
+
+            cursor:pointer;
+
+            font-size:14px;
+
+            font-weight:600;
+
+            transition:0.3s;
         }
 
-        .error {
+        .logout-btn:hover{
 
-            color: red;
-            font-weight: bold;
-            margin-top: 15px;
+            background:#b91c1c;
+
+            transform:translateY(-2px);
         }
 
-        .mapa-container {
+        /* ================= CONTENIDO ================= */
 
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+        .container{
+
+            width:95%;
+
+            max-width:1400px;
+
+            margin:auto;
+
+            padding:35px 0;
         }
 
-        img {
+        .card{
 
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            border: 1px solid #ccc;
+            background:white;
+
+            border-radius:22px;
+
+            padding:30px;
+
+            box-shadow:
+            0 10px 30px rgba(0,0,0,0.08);
+
+            margin-bottom:30px;
         }
 
-        .info {
+        /* ================= FORMULARIO ================= */
 
-            margin-top: 10px;
-            color: #444;
-            font-size: 15px;
+        .form-grid{
+
+            display:grid;
+
+            grid-template-columns:
+            repeat(auto-fit,minmax(220px,1fr));
+
+            gap:18px;
+
+            align-items:end;
+        }
+
+        .input-group{
+
+            display:flex;
+
+            flex-direction:column;
+        }
+
+        label{
+
+            margin-bottom:8px;
+
+            font-size:14px;
+
+            font-weight:600;
+
+            color:#334155;
+        }
+
+        select{
+
+            padding:14px;
+
+            border-radius:12px;
+
+            border:1px solid #cbd5e1;
+
+            font-size:15px;
+
+            background:#f8fafc;
+
+            transition:0.3s;
+        }
+
+        select:focus{
+
+            outline:none;
+
+            border-color:#2563eb;
+
+            box-shadow:
+            0 0 0 3px rgba(37,99,235,0.15);
+        }
+
+        .btn{
+
+            padding:14px;
+
+            border:none;
+
+            border-radius:12px;
+
+            font-size:15px;
+
+            font-weight:600;
+
+            color:white;
+
+            cursor:pointer;
+
+            transition:0.3s;
+        }
+
+        .btn-primary{
+
+            background:
+            linear-gradient(
+                135deg,
+                #2563eb,
+                #1d4ed8
+            );
+        }
+
+        .btn-primary:hover{
+
+            transform:translateY(-2px);
+
+            box-shadow:
+            0 8px 20px rgba(37,99,235,0.3);
+        }
+
+        /* ================= MAPA ================= */
+
+        .mapa{
+
+            text-align:center;
+        }
+
+        .mapa img{
+
+            width:100%;
+
+            border-radius:18px;
+
+            border:1px solid #dbe4ee;
+
+            box-shadow:
+            0 6px 25px rgba(0,0,0,0.12);
+        }
+
+        .acciones{
+
+            margin-top:25px;
+
+            display:flex;
+
+            justify-content:center;
+
+            gap:15px;
+
+            flex-wrap:wrap;
+        }
+
+        .btn-pdf{
+
+            background:
+            linear-gradient(
+                135deg,
+                #dc2626,
+                #b91c1c
+            );
+        }
+
+        .btn-excel{
+
+            background:
+            linear-gradient(
+                135deg,
+                #059669,
+                #047857
+            );
+        }
+
+        .btn:hover{
+
+            transform:translateY(-2px);
+        }
+
+        /* ================= INFO ================= */
+
+        .descripcion{
+
+            margin-top:25px;
+
+            line-height:1.9;
+
+            color:#475569;
+
+            font-size:15px;
+
+            text-align:justify;
+        }
+
+        .error{
+
+            margin-top:18px;
+
+            background:#fee2e2;
+
+            color:#991b1b;
+
+            padding:14px;
+
+            border-radius:12px;
+
+            font-weight:500;
+        }
+
+        /* ================= FOOTER ================= */
+
+        .footer{
+
+            margin-top:40px;
+
+            background:#0f172a;
+
+            color:white;
+
+            text-align:center;
+
+            padding:30px;
+
+            font-size:14px;
+
+            line-height:2;
+        }
+
+        .footer span{
+
+            opacity:0.8;
         }
 
     </style>
@@ -99,106 +364,229 @@
 
 <body>
 
-    <div class="container">
+    <!-- HEADER -->
+
+    <div class="header">
 
         <h1>
-            Sistema de Análisis de Isla de Calor Urbana Superficial
+            Sistema Web SIG de Isla de Calor Urbana
         </h1>
 
-        <div class="formulario">
+        <p>
+            Plataforma de análisis espacial de temperatura superficial urbana mediante interpolación IDW
+        </p>
 
-            <form method="get" action="{% url 'generar_mapa' %}">
+        <div class="badge">
 
-                <!-- Año -->
-                <select name="anio">
+            Medellín • Tecnológico de Antioquia • Ingeniería de Software
 
-                    {% for a in anios %}
+        </div>
 
-                        <option value="{{ a }}"
-                            {% if anio_seleccionado == a %}selected{% endif %}>
+        <!-- BOTÓN CERRAR SESIÓN -->
 
-                            {{ a }}
+        <div class="logout-container">
 
-                        </option>
+            <form method="POST"
+                  action="{% url 'logout' %}">
 
-                    {% endfor %}
+                {% csrf_token %}
 
-                </select>
+                <button type="submit"
+                        class="logout-btn">
 
-                <!-- Mes -->
-                <select name="mes">
+                    Cerrar sesión
 
-                    {% for m in meses %}
-
-                        <option value="{{ m.numero }}"
-                            {% if mes_seleccionado == m.numero %}selected{% endif %}>
-
-                            {{ m.nombre }}
-
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <!-- Comuna -->
-                <select name="comuna">
-
-                    <option value="Todas">
-                        Todas las comunas
-                    </option>
-
-                    {% for c in comunas %}
-
-                        <option value="{{ c }}"
-                            {% if comuna_seleccionada == c %}selected{% endif %}>
-
-                            {{ c }}
-
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <button type="submit">
-                    Generar mapa
                 </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- CONTENIDO -->
+
+    <div class="container">
+
+        <!-- FORMULARIO -->
+
+        <div class="card">
+
+            <form method="GET"
+                  action="{% url 'generar_mapa' %}">
+
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>
+                            Seleccionar año
+                        </label>
+
+                        <select name="anio">
+
+                            {% for a in anios %}
+
+                                <option value="{{ a }}"
+                                {% if anio_seleccionado == a %}selected{% endif %}>
+
+                                    {{ a }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Seleccionar mes
+                        </label>
+
+                        <select name="mes">
+
+                            {% for m in meses %}
+
+                                <option value="{{ m.numero }}"
+                                {% if mes_seleccionado == m.numero %}selected{% endif %}>
+
+                                    {{ m.nombre }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Filtrar por comuna
+                        </label>
+
+                        <select name="comuna">
+
+                            <option value="Todas">
+
+                                Todas las comunas
+
+                            </option>
+
+                            {% for c in comunas %}
+
+                                <option value="{{ c }}"
+                                {% if comuna_seleccionada == c %}selected{% endif %}>
+
+                                    {{ c }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <button type="submit"
+                                class="btn btn-primary">
+
+                            Generar análisis térmico
+
+                        </button>
+
+                    </div>
+
+                </div>
 
             </form>
 
             {% if error %}
 
-                <p class="error">
+                <div class="error">
+
                     {{ error }}
-                </p>
+
+                </div>
 
             {% endif %}
 
         </div>
 
+        <!-- RESULTADO -->
+
         {% if mapa_url %}
 
-            <div class="mapa-container">
+        <div class="card mapa">
 
-                <h2>
-                    Resultado del análisis térmico
-                </h2>
+            <h2>
 
-                <img src="{{ mapa_url }}" alt="Mapa IDW">
+                Resultado del análisis espacial
 
-                <div class="info">
+            </h2>
 
-                    <p>
-                        Visualización espacial de temperatura promedio mensual
-                        interpolada mediante método IDW.
-                    </p>
+            <br>
 
-                </div>
+            <img src="{{ mapa_url }}"
+                 alt="Mapa IDW">
+
+            <div class="acciones">
+
+                <a href="{{ pdf_url }}" download>
+
+                    <button class="btn btn-pdf">
+
+                        Descargar PDF
+
+                    </button>
+
+                </a>
+
+                <a href="{{ excel_url }}" download>
+
+                    <button class="btn btn-excel">
+
+                        Descargar Excel
+
+                    </button>
+
+                </a>
 
             </div>
 
+            <div class="descripcion">
+
+                El mapa presentado representa la distribución espacial de temperatura
+                superficial urbana en Medellín utilizando interpolación IDW
+                (Inverse Distance Weighting). El sistema integra análisis SIG,
+                visualización geoespacial y procesamiento de datos climáticos
+                provenientes de estaciones meteorológicas urbanas.
+
+            </div>
+
+        </div>
+
         {% endif %}
+
+    </div>
+
+    <!-- FOOTER -->
+
+    <div class="footer">
+
+        Proyecto de investigación — Sistema Web SIG <br>
+
+        Alexander Vélez Muñoz<br>
+
+        <span>
+            Tecnológico de Antioquia — Ingeniería de Software
+        </span>
 
     </div>
 

@@ -1,7 +1,14 @@
 from django.urls import path
-from . import views
+from .views import generar_mapa, registro, logout_view
 
 urlpatterns = [
-    path('', views.generar_mapa, name='inicio'),  # 👈 ruta raíz
-    path('mapa_idw/', views.generar_mapa, name='generar_mapa'),
+
+    path('', generar_mapa, name='inicio'),
+
+    path('mapa_idw/', generar_mapa, name='generar_mapa'),
+
+    path('registro/', registro, name='registro'),
+
+    path('logout/', logout_view, name='logout'),
+
 ]

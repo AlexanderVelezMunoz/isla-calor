@@ -1,4 +1,6 @@
-# Archivo views.py corregido para Railway + Base de datos + IDW + filtro por comuna
+# =========================================================
+# INTERPOLACIÓN IDW MEJORADA - NIVEL TESIS
+# =========================================================
 
 import matplotlib
 matplotlib.use('Agg')
@@ -8,35 +10,52 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from .utils import generar_excel
-from matplotlib.colors import ListedColormap
-from matplotlib_scalebar.scalebar import ScaleBar
+
 from scipy.spatial import cKDTree
-from django.shortcuts import render
+from shapely.vectorized import contains
+
 from django.conf import settings
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout, login
+
+from matplotlib_scalebar.scalebar import ScaleBar
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator
+
+import contextily as ctx
 
 from .models import RegistroClimatico, Estacion
-from .utils import generar_reporte_pdf
-from django.http import FileResponse
-from shapely.vectorized import contains
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import contextily as ctx
-from matplotlib.patches import Polygon, Patch
-from matplotlib.ticker import MaxNLocator
-import matplotlib.gridspec as gridspec
-plt.rcParams['font.family'] = 'DejaVu Sans'
-from django.contrib.auth.decorators import login_required
+from .utils import generar_reporte_pdf, generar_excel
 
-@login_required
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
+
+# =========================================================
+# LOGOUT
+# =========================================================
+
+def logout_view(request):
+
+    logout(request)
+
+    return redirect('login')
+
+
+# =========================================================
+# MAPA PRINCIPAL
+# =========================================================
+
+@login_required(login_url='login')
 def generar_mapa(request):
 
-    # === CARGA DE ARCHIVOS ===
-    limite_path = os.path.join(
-        settings.BASE_DIR,
-        "medellin_comunas_corregimientos.geojson"
-    )
+    # =========================================================
+    # ARCHIVOS
+    # =========================================================
 
-    comunas_path = os.path.join(
+    limite_path = os.path.join(
         settings.BASE_DIR,
         "medellin_comunas_corregimientos.geojson"
     )
@@ -46,12 +65,22 @@ def generar_mapa(request):
         "municipios_vecinos.geojson"
     )
 
-    # === GEOJSON ===
-    gdf_limite = gpd.read_file(limite_path).to_crs(epsg=4326)
-    gdf_comunas = gpd.read_file(comunas_path).to_crs(epsg=4326)
-    gdf_vecinos = gpd.read_file(vecinos_path).to_crs(epsg=4326)
+    # =========================================================
+    # GEOJSON
+    # =========================================================
 
-    # === AÑOS DESDE BASE DE DATOS ===
+    gdf_limite = gpd.read_file(limite_path).to_crs(epsg=4326)
+
+    gdf_comunas = gdf_limite.copy()
+
+    gdf_vecinos = gpd.read_file(
+        vecinos_path
+    ).to_crs(epsg=4326)
+
+    # =========================================================
+    # AÑOS
+    # =========================================================
+
     registros = RegistroClimatico.objects.all()
 
     anios = sorted(
@@ -68,7 +97,10 @@ def generar_mapa(request):
         ])
     ]
 
-    # === COMUNAS ===
+    # =========================================================
+    # COMUNAS
+    # =========================================================
+
     comunas = sorted(
         Estacion.objects.values_list(
             'comuna',
@@ -80,7 +112,10 @@ def generar_mapa(request):
     mes = request.GET.get("mes")
     comuna = request.GET.get("comuna")
 
-    # === MOSTRAR SELECTOR ===
+    # =========================================================
+    # SELECTOR
+    # =========================================================
+
     if not anio or not mes:
 
         return render(request, "selector.html", {
@@ -92,20 +127,29 @@ def generar_mapa(request):
     anio = int(anio)
     mes = int(mes)
 
-    # === CONSULTA BASE DE DATOS ===
+    # =========================================================
+    # CONSULTA
+    # =========================================================
+
     registros_mes = RegistroClimatico.objects.filter(
         fecha__year=anio,
         fecha__month=mes
     )
 
-    # === FILTRO POR COMUNA ===
+    # =========================================================
+    # FILTRO COMUNA
+    # =========================================================
+
     if comuna and comuna != "Todas":
 
         registros_mes = registros_mes.filter(
             estacion__comuna=comuna
         )
 
-    # === CONVERTIR A DATAFRAME ===
+    # =========================================================
+    # DATAFRAME
+    # =========================================================
+
     datos = []
 
     for r in registros_mes:
@@ -119,7 +163,10 @@ def generar_mapa(request):
 
     df_mes = pd.DataFrame(datos)
 
-    # === VALIDAR DATOS ===
+    # =========================================================
+    # VALIDAR
+    # =========================================================
+
     if df_mes.empty:
 
         return render(request, "selector.html", {
@@ -132,82 +179,74 @@ def generar_mapa(request):
             "error": f"No hay datos para {mes}/{anio}"
         })
 
-    # === INTERPOLACIÓN ===
-    xmin, ymin, xmax, ymax = gdf_limite.total_bounds
+    # =========================================================
+    # VALIDACIÓN DE TEMPERATURAS
+    # =========================================================
 
-    res = 100
+    df_mes = df_mes[
+        (df_mes["Valor"] > 5) &
+        (df_mes["Valor"] < 45)
+    ]
 
-    xi, yi = np.meshgrid(
-        np.linspace(xmin, xmax, res),
-        np.linspace(ymin, ymax, res)
-    )
+    # =========================================================
+    # ESTADÍSTICAS
+    # =========================================================
 
-    # Coordenadas estaciones
-    puntos = df_mes[["Long", "Lat"]].values
+    temp_max = round(df_mes["Valor"].max(), 1)
+    temp_min = round(df_mes["Valor"].min(), 1)
+    temp_prom = round(df_mes["Valor"].mean(), 1)
 
-    # Temperaturas
-    valores = df_mes["Valor"].values
+    # =========================================================
+    # VALIDAR ESTACIONES
+    # =========================================================
 
-    # Grid para interpolación
-    grid_points = np.vstack(
-        (xi.flatten(), yi.flatten())
-    ).T
+    cantidad_estaciones = len(df_mes)
 
-    # Árbol espacial
-    tree = cKDTree(puntos)
+    hacer_interpolacion = cantidad_estaciones >= 5
 
-    # Buscar vecinos
-    k = min(6, len(puntos))
+    # =========================================================
+    # CLASIFICACIÓN DE CONFIABILIDAD
+    # =========================================================
 
-    # Evitar error si hay pocos puntos
-    if k < 2:
-        k = 1
+    if cantidad_estaciones >= 10:
 
-    distancias, indices = tree.query(
-        grid_points,
-        k=k
-    )
+        nivel_confianza = "Alta"
 
-    # Evitar división por cero
-    distancias[distancias == 0] = 0.0001
+    elif cantidad_estaciones >= 7:
 
-    # Potencia IDW
-    p = 2
+        nivel_confianza = "Moderada"
 
-    # Pesos
-    pesos = 1 / (distancias ** p)
-
-    # === INTERPOLACIÓN IDW ===
-
-    # Si solo hay 1 vecino
-    if k == 1:
-
-        zi = valores[indices]
-
-    # Si hay varios vecinos
     else:
 
-        zi = np.sum(
-            pesos * valores[indices],
-            axis=1
-        ) / np.sum(
-            pesos,
-            axis=1
+        nivel_confianza = "Básica"
+
+    # =========================================================
+    # OBSERVACIÓN METODOLÓGICA
+    # =========================================================
+
+    if cantidad_estaciones == 5:
+
+        observacion = (
+            "La interpolación fue generada con el mínimo "
+            "de estaciones requerido metodológicamente (5)."
         )
 
-    # Volver matriz
-    zi = zi.reshape(xi.shape)
+    elif cantidad_estaciones < 7:
 
-    # Máscara Medellín
-    mask = contains(
-        gdf_limite.unary_union,
-        xi,
-        yi
-    )
+        observacion = (
+            "La interpolación presenta una cobertura espacial limitada."
+        )
 
-    zi_mask = np.where(mask, zi, np.nan)
+    else:
 
-    # === REPROYECCIÓN ===
+        observacion = (
+            "La interpolación presenta una distribución espacial adecuada."
+        )
+
+    # =========================================================
+    # REPROYECCIÓN
+    # =========================================================
+
     gdf_vecinos = gdf_vecinos.to_crs(epsg=3857)
     gdf_comunas = gdf_comunas.to_crs(epsg=3857)
     gdf_limite = gdf_limite.to_crs(epsg=3857)
@@ -221,153 +260,270 @@ def generar_mapa(request):
         crs="EPSG:4326"
     ).to_crs(epsg=3857)
 
-    # === FIGURA ===
-    fig = plt.figure(figsize=(12, 7))
+    # =========================================================
+    # FIGURA
+    # =========================================================
 
-    gs = gridspec.GridSpec(
+    fig = plt.figure(figsize=(16, 9))
+
+    gs = fig.add_gridspec(
         1,
         2,
-        width_ratios=[3, 1],
-        wspace=0.05
+        width_ratios=[4.5, 1],
+        wspace=0.02
     )
 
     ax = fig.add_subplot(gs[0])
 
-    extent = gdf_limite.total_bounds
+    xmin, ymin, xmax, ymax = gdf_limite.total_bounds
 
-    im = ax.imshow(
-        zi_mask,
-        extent=(extent[0], extent[2], extent[1], extent[3]),
-        origin="lower",
-        cmap=ListedColormap([
-            "blue",
-            "cyan",
-            "yellow",
-            "orange",
-            "red"
-        ]),
-        alpha=0.8,
-        zorder=1
-    )
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
 
-    geom = gdf_limite.geometry.unary_union
+    ax.set_facecolor('#edf2f7')
 
-    if geom.geom_type == "MultiPolygon":
+    # =========================================================
+    # BASEMAP
+    # =========================================================
 
-        for poly in geom.geoms:
+    try:
 
-            patch = Polygon(
-                np.array(poly.exterior.coords),
-                facecolor='none',
-                transform=ax.transData
-            )
+        ctx.add_basemap(
+            ax,
+            source=ctx.providers.CartoDB.Positron,
+            zoom=11
+        )
 
-            im.set_clip_path(patch)
+    except:
+        pass
+
+    # =========================================================
+    # INTERPOLACIÓN
+    # =========================================================
+
+    if hacer_interpolacion:
+
+        res = 600
+
+        xi, yi = np.meshgrid(
+            np.linspace(xmin, xmax, res),
+            np.linspace(ymin, ymax, res)
+        )
+
+        puntos = np.array([
+            (geom.x, geom.y)
+            for geom in df_mes_proj.geometry
+        ])
+
+        valores = df_mes_proj["Valor"].values
+
+        grid_points = np.vstack(
+            (xi.flatten(), yi.flatten())
+        ).T
+
+        tree = cKDTree(puntos)
+
+        k = min(5, len(puntos))
+
+        distancias, indices = tree.query(
+            grid_points,
+            k=k
+        )
+
+        distancias[distancias == 0] = 0.0001
+
+        p = 2
+
+        pesos = 1 / (distancias ** p)
+
+        zi = np.sum(
+            pesos * valores[indices],
+            axis=1
+        ) / np.sum(
+            pesos,
+            axis=1
+        )
+
+        zi = zi.reshape(xi.shape)
+
+        mask = contains(
+            gdf_limite.unary_union,
+            xi,
+            yi
+        )
+
+        zi_mask = np.where(mask, zi, np.nan)
+
+        im = ax.imshow(
+            zi_mask,
+            extent=(xmin, xmax, ymin, ymax),
+            origin="lower",
+            interpolation='bicubic',
+            cmap='RdYlBu_r',
+            alpha=0.82,
+            zorder=1
+        )
+
+        contornos = ax.contour(
+            xi,
+            yi,
+            zi_mask,
+            levels=10,
+            colors='black',
+            linewidths=0.4,
+            alpha=0.18,
+            zorder=2
+        )
+
+        ax.clabel(
+            contornos,
+            inline=True,
+            fontsize=6,
+            fmt="%.1f°C"
+        )
 
     else:
 
-        patch = Polygon(
-            np.array(geom.exterior.coords),
-            facecolor='none',
-            transform=ax.transData
+        ax.text(
+            0.5,
+            0.95,
+            "Muestra insuficiente para interpolación IDW",
+            transform=ax.transAxes,
+            ha='center',
+            fontsize=10,
+            fontweight='bold',
+            color='darkred',
+            bbox=dict(
+                facecolor='white',
+                alpha=0.9,
+                edgecolor='darkred'
+            )
         )
 
-        im.set_clip_path(patch)
+    # =========================================================
+    # MUNICIPIOS VECINOS
+    # =========================================================
 
-    # === BASEMAP ===
-    ctx.add_basemap(
-        ax,
-        crs="EPSG:3857",
-        source=ctx.providers.OpenStreetMap.Mapnik,
-        zorder=0
-    )
-
-    # === CAPAS ===
     gdf_vecinos.boundary.plot(
         ax=ax,
         edgecolor='gray',
         linestyle='--',
-        linewidth=0.8,
-        zorder=2
-    )
-
-    gdf_comunas.boundary.plot(
-        ax=ax,
-        edgecolor='black',
-        linewidth=0.6,
+        linewidth=0.7,
+        alpha=0.6,
         zorder=3
     )
 
-    df_mes_proj.plot(
+    # =========================================================
+    # COMUNAS
+    # =========================================================
+
+    gdf_comunas.plot(
         ax=ax,
-        facecolor='white',
+        facecolor='none',
         edgecolor='black',
-        markersize=60,
+        linewidth=0.7,
+        alpha=0.75,
         zorder=4
     )
 
-    # === NOMBRES ESTACIONES ===
-    for _, r in df_mes_proj.iterrows():
+    # =========================================================
+    # ESTACIONES
+    # =========================================================
 
-        ax.text(
-            r.geometry.x,
-            r.geometry.y,
-            r.Estacion,
-            fontsize=6,
-            ha='right',
-            va='bottom',
-            zorder=5,
-            bbox=dict(
-                facecolor='white',
-                alpha=0.6,
-                edgecolor='none',
-                boxstyle='round,pad=0.2'
-            )
-        )
-
-    ax.grid(True, linestyle=':', alpha=0.5)
-
-    # === FLECHA NORTE ===
-    ax.annotate(
-        'N',
-        xy=(0.95, 0.2),
-        xytext=(0.95, 0.1),
-        arrowprops=dict(
-            facecolor='black',
-            width=5,
-            headwidth=15
-        ),
-        xycoords='axes fraction',
-        ha='center'
+    ax.scatter(
+        df_mes_proj.geometry.x,
+        df_mes_proj.geometry.y,
+        c='#b91c1c',
+        edgecolor='white',
+        linewidth=1.2,
+        s=85,
+        alpha=0.95,
+        zorder=5
     )
 
-    # === ESCALA ===
+    # =========================================================
+    # ETIQUETAS
+    # =========================================================
+
+    for i, r in enumerate(df_mes_proj.itertuples()):
+
+        nombre_corto = r.Estacion[:8]
+
+        offset_x = 80 if i % 2 == 0 else -80
+        offset_y = 80 if i % 3 == 0 else 140
+
+        ax.text(
+            r.geometry.x + offset_x,
+            r.geometry.y + offset_y,
+            f"{nombre_corto}\n{round(r.Valor,1)}°C",
+            fontsize=6,
+            fontweight='bold',
+            color='#111827',
+            ha='center',
+            va='center',
+            bbox=dict(
+                facecolor='white',
+                alpha=0.78,
+                edgecolor='#cbd5e1',
+                boxstyle='round,pad=0.25'
+            ),
+            zorder=6
+        )
+
+    # =========================================================
+    # GRID
+    # =========================================================
+
+    ax.grid(
+        True,
+        linestyle=':',
+        alpha=0.15
+    )
+
+    # =========================================================
+    # NORTE
+    # =========================================================
+
+    ax.annotate(
+        'N',
+        xy=(0.95, 0.14),
+        xytext=(0.95, 0.05),
+        arrowprops=dict(
+            facecolor='black',
+            width=3,
+            headwidth=10
+        ),
+        xycoords='axes fraction',
+        ha='center',
+        fontsize=12,
+        fontweight='bold'
+    )
+
+    # =========================================================
+    # ESCALA
+    # =========================================================
+
     ax.add_artist(
         ScaleBar(
             1,
             units="m",
-            location='lower right'
+            location='lower left',
+            box_alpha=0.7
         )
     )
 
-    # === CRÉDITOS ===
-    fig.text(
-        0.02,
-        0.02,
-        "Elaborado por: Alexander Vélez Muñoz  – Proyecto de investigación - Tecnológico de Antioquia",
-        ha='left',
-        fontsize=6,
-        style='italic'
-    )
+    # =========================================================
+    # PANEL DERECHO
+    # =========================================================
 
-    # === PANEL DERECHO ===
     ax_leg = fig.add_subplot(gs[1])
 
     ax_leg.axis('off')
 
     legend_elements = [
+
         Patch(
-            facecolor='white',
+            facecolor='darkred',
             edgecolor='black',
             label='Estaciones meteorológicas'
         ),
@@ -375,15 +531,12 @@ def generar_mapa(request):
         Patch(
             facecolor='none',
             edgecolor='black',
-            linewidth=0.6,
-            label='Límites de comunas'
+            label='Límites comunales'
         ),
 
         Patch(
             facecolor='none',
             edgecolor='gray',
-            linestyle='--',
-            linewidth=0.8,
             label='Municipios vecinos'
         )
     ]
@@ -391,126 +544,193 @@ def generar_mapa(request):
     ax_leg.legend(
         handles=legend_elements,
         loc='upper left',
-        fontsize=8,
+        fontsize=9,
         frameon=False
     )
 
-    # === COLORBAR ===
-    cbar = fig.colorbar(
-        im,
-        ax=ax_leg,
-        shrink=0.8,
-        orientation='vertical',
-        pad=0.05
+    # =========================================================
+    # INFORMACIÓN TÉCNICA
+    # =========================================================
+
+    info = f"""
+ANÁLISIS TÉRMICO
+
+Temperatura máxima:
+{temp_max} °C
+
+Temperatura mínima:
+{temp_min} °C
+
+Temperatura promedio:
+{temp_prom} °C
+
+Estaciones utilizadas:
+{cantidad_estaciones}
+
+Confiabilidad espacial:
+{nivel_confianza}
+
+Método:
+IDW
+
+Potencia IDW:
+{p if hacer_interpolacion else 'N/A'}
+
+Resolución:
+{res if hacer_interpolacion else 'N/A'} x {res if hacer_interpolacion else 'N/A'}
+
+Observación:
+{observacion}
+"""
+
+    ax_leg.text(
+        0.02,
+        0.65,
+        info,
+        fontsize=9,
+        verticalalignment='top',
+        bbox=dict(
+            facecolor='white',
+            alpha=0.92,
+            edgecolor='#cbd5e1',
+            boxstyle='round,pad=0.6'
+        )
     )
 
-    cbar.set_label(
-        "Temperatura promedio mensual (°C)",
-        fontsize=9
+    # =========================================================
+    # COLORBAR
+    # =========================================================
+
+    if hacer_interpolacion:
+
+        cbar = fig.colorbar(
+            im,
+            ax=ax_leg,
+            shrink=0.52,
+            pad=0.02
+        )
+
+        cbar.set_label(
+            "Temperatura (°C)",
+            fontsize=9
+        )
+
+        cbar.ax.tick_params(labelsize=8)
+
+        cbar.locator = MaxNLocator(nbins=6)
+
+        cbar.update_ticks()
+
+    # =========================================================
+    # LOGO
+    # =========================================================
+
+    logo_path = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "logos",
+        "logo_tdea.png"
     )
 
-    cbar.ax.tick_params(labelsize=7)
+    if os.path.exists(logo_path):
 
-    cbar.locator = MaxNLocator(nbins=6)
+        try:
 
-    cbar.update_ticks()
+            logo_img = plt.imread(logo_path)
 
-    # === LOGOS ===
-    logo_rutas = [
+            imagebox = OffsetImage(
+                logo_img,
+                zoom=0.10
+            )
 
-        os.path.join(
-            settings.BASE_DIR,
-            "media",
-            "static",
-            "logos",
-            "logo_instituto.png"
-        ),
+            ab = AnnotationBbox(
+                imagebox,
+                (0.5, 0.08),
+                frameon=False,
+                xycoords='axes fraction'
+            )
 
-        os.path.join(
-            settings.BASE_DIR,
-            "media",
-            "static",
-            "logos",
-            "logo_universidad.png"
-        ),
+            ax_leg.add_artist(ab)
 
-        os.path.join(
-            settings.BASE_DIR,
-            "static",
-            "logos",
-            "logo_instituto.png"
-        ),
+        except:
+            pass
 
-        os.path.join(
-            settings.BASE_DIR,
-            "static",
-            "logos",
-            "logo_universidad.png"
-        ),
-    ]
+    # =========================================================
+    # TÍTULO
+    # =========================================================
 
-    ypos = 0.1
-
-    for logo_path in logo_rutas:
-
-        if os.path.exists(logo_path):
-
-            try:
-
-                logo_img = plt.imread(logo_path)
-
-                imagebox = OffsetImage(
-                    logo_img,
-                    zoom=0.15
-                )
-
-                ab = AnnotationBbox(
-                    imagebox,
-                    (0.5, ypos),
-                    frameon=False,
-                    xycoords='axes fraction'
-                )
-
-                ax_leg.add_artist(ab)
-
-                ypos += 0.18
-
-            except:
-                pass
-
-    # === TÍTULO ===
     meses_name = [
         "Ene", "Feb", "Mar", "Abr", "May", "Jun",
         "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
     ]
 
-    titulo = f"ISLA DE CALOR URBANA SUPERFICIAL\nMedellín – {meses_name[mes-1]} {anio}"
+    titulo = (
+        f"Interpolación IDW de Temperatura Superficial Urbana\n"
+        f"Medellín - {meses_name[mes-1]} {anio}"
+    )
 
     if comuna and comuna != "Todas":
+
         titulo += f"\nComuna: {comuna}"
 
     fig.suptitle(
         titulo,
-        fontsize=13,
+        fontsize=18,
         weight='bold'
     )
 
-    # === GUARDAR MAPA ===
+    # =========================================================
+    # CRÉDITOS
+    # =========================================================
+
+    fig.text(
+        0.01,
+        0.01,
+        "Alexander Vélez Muñoz - Tecnológico de Antioquia",
+        fontsize=7,
+        style='italic'
+    )
+
+    # =========================================================
+    # LIMPIAR EJES
+    # =========================================================
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    # =========================================================
+    # AJUSTE FINAL
+    # =========================================================
+
+    fig.subplots_adjust(
+        left=0.02,
+        right=0.97,
+        top=0.90,
+        bottom=0.03
+    )
+
+    # =========================================================
+    # GUARDAR
+    # =========================================================
+
     output_path = os.path.join(
         settings.MEDIA_ROOT,
         "mapa.png"
     )
 
-    fig.tight_layout(rect=[0, 0.04, 1, 0.95])
-
     fig.savefig(
         output_path,
-        dpi=300
+        dpi=180,
+        bbox_inches='tight',
+        facecolor='white'
     )
 
     plt.close(fig)
 
-     # === GENERAR PDF ===
+    # =========================================================
+    # PDF Y EXCEL
+    # =========================================================
+
     generar_reporte_pdf(
         anio,
         mes,
@@ -518,12 +738,12 @@ def generar_mapa(request):
         output_path
     )
 
-    # === GENERAR EXCEL ===
     generar_excel(df_mes)
 
     return render(request, "mapa_idw.html", {
 
-        "mapa_url": settings.MEDIA_URL + "mapa.png",
+        "mapa_url":
+            settings.MEDIA_URL + "mapa.png",
 
         "pdf_url":
             settings.MEDIA_URL +
@@ -534,6 +754,7 @@ def generar_mapa(request):
             "reporte_temperatura.xlsx",
 
         "anio": anio,
+
         "mes": mes,
 
         "comuna": comuna,
@@ -543,4 +764,33 @@ def generar_mapa(request):
         "anios": anios,
 
         "meses": meses
-    })  
+    })
+
+
+# =========================================================
+# REGISTRO
+# =========================================================
+
+def registro(request):
+
+    if request.method == 'POST':
+
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+
+            user = form.save()
+
+            login(request, user)
+
+            return redirect('generar_mapa')
+
+    else:
+
+        form = UserCreationForm()
+
+    return render(
+        request,
+        'registration/registro.html',
+        {'form': form}
+    )

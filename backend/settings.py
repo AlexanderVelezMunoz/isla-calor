@@ -104,7 +104,7 @@ USE_TZ = True
 # Archivos estáticos (CSS, JS, etc.)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "media/static",  # donde están tus logos
+    BASE_DIR / "static",  # donde están tus logos
 ]
 
 # Archivos cargados o generados por el usuario (mapas PNG)
@@ -119,3 +119,5 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # Redirección después del login
 LOGIN_REDIRECT_URL = '/mapa_idw/'  # o la página principal de tu sistema
 LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
