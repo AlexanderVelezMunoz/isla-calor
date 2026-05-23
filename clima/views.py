@@ -1,5 +1,5 @@
 # =========================================================
-# INTERPOLACIÓN IDW MEJORADA - NIVEL TESIS
+# INTERPOLACIÓN IDW
 # =========================================================
 
 import matplotlib
@@ -65,16 +65,27 @@ def generar_mapa(request):
         "municipios_vecinos.geojson"
     )
 
+    comunas_path = os.path.join(
+        settings.BASE_DIR,
+        "Comunas_Medellin.shp"
+    )
+
     # =========================================================
-    # GEOJSON
+    # GEOJSON / SHAPEFILES
     # =========================================================
 
-    gdf_limite = gpd.read_file(limite_path).to_crs(epsg=4326)
+    gdf_limite = gpd.read_file(
+        limite_path
+    ).to_crs(epsg=4326)
 
     gdf_comunas = gdf_limite.copy()
 
     gdf_vecinos = gpd.read_file(
         vecinos_path
+    ).to_crs(epsg=4326)
+
+    gdf_comunas_urbanas = gpd.read_file(
+        comunas_path
     ).to_crs(epsg=4326)
 
     # =========================================================
@@ -98,19 +109,39 @@ def generar_mapa(request):
     ]
 
     # =========================================================
-    # COMUNAS
+    # COMUNAS URBANAS DESDE SHAPEFILE
     # =========================================================
 
+    columnas = gdf_comunas_urbanas.columns
+
+    columna_nombre = None
+
+    for col in columnas:
+
+        if "nombre" in col.lower() or "comuna" in col.lower():
+
+            columna_nombre = col
+            break
+
+    if columna_nombre is None:
+
+        columna_nombre = columnas[0]
+
     comunas = sorted(
-        Estacion.objects.values_list(
-            'comuna',
-            flat=True
-        ).distinct()
+
+        gdf_comunas_urbanas[
+            columna_nombre
+        ].dropna().astype(str).unique()
+
     )
+
+    # =========================================================
+    # VARIABLES GET
+    # =========================================================
 
     anio = request.GET.get("anio")
     mes = request.GET.get("mes")
-    comuna = request.GET.get("comuna")
+    comuna = request.GET.get("comuna", "Todas")
 
     # =========================================================
     # SELECTOR
@@ -135,16 +166,6 @@ def generar_mapa(request):
         fecha__year=anio,
         fecha__month=mes
     )
-
-    # =========================================================
-    # FILTRO COMUNA
-    # =========================================================
-
-    if comuna and comuna != "Todas":
-
-        registros_mes = registros_mes.filter(
-            estacion__comuna=comuna
-        )
 
     # =========================================================
     # DATAFRAME
@@ -205,7 +226,7 @@ def generar_mapa(request):
     hacer_interpolacion = cantidad_estaciones >= 5
 
     # =========================================================
-    # CLASIFICACIÓN DE CONFIABILIDAD
+    # CONFIABILIDAD
     # =========================================================
 
     if cantidad_estaciones >= 10:
@@ -221,7 +242,7 @@ def generar_mapa(request):
         nivel_confianza = "Básica"
 
     # =========================================================
-    # OBSERVACIÓN METODOLÓGICA
+    # OBSERVACIÓN
     # =========================================================
 
     if cantidad_estaciones == 5:
@@ -248,8 +269,12 @@ def generar_mapa(request):
     # =========================================================
 
     gdf_vecinos = gdf_vecinos.to_crs(epsg=3857)
+
     gdf_comunas = gdf_comunas.to_crs(epsg=3857)
+
     gdf_limite = gdf_limite.to_crs(epsg=3857)
+
+    gdf_comunas_urbanas = gdf_comunas_urbanas.to_crs(epsg=3857)
 
     df_mes_proj = gpd.GeoDataFrame(
         df_mes,
@@ -261,24 +286,74 @@ def generar_mapa(request):
     ).to_crs(epsg=3857)
 
     # =========================================================
-    # FIGURA
+    # FIGURA DINÁMICA
     # =========================================================
 
-    fig = plt.figure(figsize=(16, 9))
+    if comuna and comuna != "Todas":
 
-    gs = fig.add_gridspec(
-        1,
-        2,
-        width_ratios=[4.5, 1],
-        wspace=0.02
-    )
+        fig = plt.figure(figsize=(10, 14))
+
+        gs = fig.add_gridspec(
+            1,
+            2,
+            width_ratios=[5, 1.2],
+            wspace=0.03
+        )
+
+    else:
+
+        fig = plt.figure(figsize=(16, 9))
+
+        gs = fig.add_gridspec(
+            1,
+            2,
+            width_ratios=[4.5, 1],
+            wspace=0.02
+        )
 
     ax = fig.add_subplot(gs[0])
 
     xmin, ymin, xmax, ymax = gdf_limite.total_bounds
 
-    ax.set_xlim(xmin, xmax)
-    ax.set_ylim(ymin, ymax)
+    # =========================================================
+    # AJUSTE DINÁMICO DE ZOOM
+    # =========================================================
+
+    if comuna and comuna != "Todas":
+
+        comuna_zoom = gdf_comunas_urbanas[
+            gdf_comunas_urbanas[columna_nombre]
+            .astype(str) == comuna
+        ]
+
+        if not comuna_zoom.empty:
+
+            xmin_c, ymin_c, xmax_c, ymax_c = (
+                comuna_zoom.total_bounds
+            )
+
+            margen_x = (xmax_c - xmin_c) * 0.35
+            margen_y = (ymax_c - ymin_c) * 0.35
+
+            ax.set_xlim(
+                xmin_c - margen_x,
+                xmax_c + margen_x
+            )
+
+            ax.set_ylim(
+                ymin_c - margen_y,
+                ymax_c + margen_y
+            )
+
+        else:
+
+            ax.set_xlim(xmin, xmax)
+            ax.set_ylim(ymin, ymax)
+
+    else:
+
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
 
     ax.set_facecolor('#edf2f7')
 
@@ -291,7 +366,7 @@ def generar_mapa(request):
         ctx.add_basemap(
             ax,
             source=ctx.providers.CartoDB.Positron,
-            zoom=11
+            zoom=12 if comuna != "Todas" else 11
         )
 
     except:
@@ -346,19 +421,75 @@ def generar_mapa(request):
 
         zi = zi.reshape(xi.shape)
 
+        # =========================================================
+        # ÁREA URBANA
+        # =========================================================
+
+        comunas_urbanas = [
+            "Popular",
+            "Santa Cruz",
+            "Manrique",
+            "Aranjuez",
+            "Castilla",
+            "Doce de Octubre",
+            "Robledo",
+            "Villa Hermosa",
+            "Buenos Aires",
+            "La Candelaria",
+            "Laureles Estadio",
+            "La América",
+            "San Javier",
+            "El Poblado",
+            "Guayabal",
+            "Belén"
+        ]
+
+        gdf_urbano = gdf_comunas_urbanas[
+            gdf_comunas_urbanas[columna_nombre]
+            .astype(str)
+            .isin(comunas_urbanas)
+        ]
+
+        geometria_recorte = gdf_urbano.unary_union
+
         mask = contains(
-            gdf_limite.unary_union,
+            geometria_recorte,
             xi,
             yi
         )
 
         zi_mask = np.where(mask, zi, np.nan)
 
+        # =========================================================
+        # RECORTE VISUAL POR COMUNA
+        # =========================================================
+
+        if comuna and comuna != "Todas":
+
+            comuna_filtrada = gdf_urbano[
+                gdf_urbano[columna_nombre]
+                .astype(str) == comuna
+            ]
+
+            if not comuna_filtrada.empty:
+
+                mask_comuna = contains(
+                    comuna_filtrada.unary_union,
+                    xi,
+                    yi
+                )
+
+                zi_mask = np.where(
+                    mask_comuna,
+                    zi_mask,
+                    np.nan
+                )
+
         im = ax.imshow(
             zi_mask,
             extent=(xmin, xmax, ymin, ymax),
             origin="lower",
-            interpolation='bicubic',
+            interpolation='gaussian',
             cmap='RdYlBu_r',
             alpha=0.82,
             zorder=1
@@ -446,6 +577,24 @@ def generar_mapa(request):
     # =========================================================
 
     for i, r in enumerate(df_mes_proj.itertuples()):
+
+        # =========================================================
+        # FILTRAR ETIQUETAS FUERA DEL ZOOM
+        # =========================================================
+
+        if comuna and comuna != "Todas":
+
+            x_actual = r.geometry.x
+            y_actual = r.geometry.y
+
+            if (
+                x_actual < ax.get_xlim()[0]
+                or x_actual > ax.get_xlim()[1]
+                or y_actual < ax.get_ylim()[0]
+                or y_actual > ax.get_ylim()[1]
+            ):
+
+                continue
 
         nombre_corto = r.Estacion[:8]
 
@@ -606,8 +755,8 @@ Observación:
         cbar = fig.colorbar(
             im,
             ax=ax_leg,
-            shrink=0.52,
-            pad=0.02
+            shrink=0.30,
+            pad=0.04
         )
 
         cbar.set_label(
@@ -763,7 +912,19 @@ Observación:
 
         "anios": anios,
 
-        "meses": meses
+        "meses": meses,
+
+        "temp_max": temp_max,
+
+        "temp_min": temp_min,
+
+        "temp_prom": temp_prom,
+
+        "cantidad_estaciones": cantidad_estaciones,
+
+        "nivel_confianza": nivel_confianza,
+
+        "observacion": observacion
     })
 
 
