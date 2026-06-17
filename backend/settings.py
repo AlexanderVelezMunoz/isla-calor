@@ -9,16 +9,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-<tu-clave-aqui>'
 
 # Solo para desarrollo: True
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "web-production-352b9.up.railway.app",
+    ".onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://web-production-352b9.up.railway.app",
+    "https://*.onrender.com",
 ]
 
 
