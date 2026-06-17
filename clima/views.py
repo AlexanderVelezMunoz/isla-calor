@@ -428,7 +428,7 @@ def generar_mapa(request):
 
     if hacer_interpolacion:
 
-        res = 600
+        res = 250
 
         xi, yi = np.meshgrid(
             np.linspace(xmin, xmax, res),
