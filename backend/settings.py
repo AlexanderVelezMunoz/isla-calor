@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'clima',  
     'whitenoise.runserver_nostatic',
+    'rest_framework',
 ]
 
 

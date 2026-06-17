@@ -573,7 +573,148 @@
         </div>
 
         {% endif %}
+        
 
+<!-- PANEL INFORMATIVO IDEAM -->
+
+<div class="card">
+
+    <h2 style="
+        text-align:center;
+        color:#1e3a8a;
+        margin-bottom:25px;
+    ">
+        Información Climática e Hidrometeorológica IDEAM
+    </h2>
+
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+        gap:20px;
+    ">
+
+        <div style="
+            background:#f8fafc;
+            border:1px solid #cbd5e1;
+            border-radius:15px;
+            padding:20px;
+        ">
+            <h3>🌧 Alertas Hidrológicas</h3>
+
+            <p style="margin-top:10px;line-height:1.7;">
+                Seguimiento de ríos, quebradas,
+                inundaciones y condiciones
+                hidrológicas reportadas por IDEAM.
+            </p>
+        </div>
+
+        <div style="
+            background:#f8fafc;
+            border:1px solid #cbd5e1;
+            border-radius:15px;
+            padding:20px;
+        ">
+            <h3>⛈ Alertas Meteorológicas</h3>
+
+            <p style="margin-top:10px;line-height:1.7;">
+                Información sobre lluvias intensas,
+                tormentas eléctricas y fenómenos
+                atmosféricos de interés nacional.
+            </p>
+        </div>
+
+        <div style="
+            background:#f8fafc;
+            border:1px solid #cbd5e1;
+            border-radius:15px;
+            padding:20px;
+        ">
+            <h3>🌡 Pronóstico Climático</h3>
+
+            <p style="margin-top:10px;line-height:1.7;">
+                Resumen de las condiciones climáticas
+                actuales y tendencias meteorológicas
+                emitidas por IDEAM.
+            </p>
+        </div>
+
+        <div style="
+            background:#f8fafc;
+            border:1px solid #cbd5e1;
+            border-radius:15px;
+            padding:20px;
+        ">
+            <h3>🔥 Relación con Islas de Calor</h3>
+
+            <p style="margin-top:10px;line-height:1.7;">
+                La información meteorológica oficial
+                complementa el análisis espacial de
+                temperatura superficial urbana
+                generado mediante interpolación IDW.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+<div class="card">
+
+    <h2 style="
+        text-align:center;
+        color:#1e3a8a;
+        margin-bottom:25px;
+    ">
+        Boletines y Noticias IDEAM
+    </h2>
+
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+        gap:20px;
+    ">
+
+        {% for boletin in boletines %}
+
+        <div style="
+            background:#f8fafc;
+            border:1px solid #cbd5e1;
+            border-radius:15px;
+            padding:20px;
+        ">
+
+            <h3>📄 {{ boletin.titulo }}</h3>
+
+            <a href="{{ boletin.url }}"
+               target="_blank"
+               style="
+               display:inline-block;
+               margin-top:12px;
+               color:#2563eb;
+               font-weight:600;
+               text-decoration:none;
+               ">
+               Ver boletín
+            </a>
+
+        </div>
+
+        {% empty %}
+
+        <div style="
+            background:#fff3cd;
+            padding:15px;
+            border-radius:10px;
+        ">
+            No se pudieron cargar boletines del IDEAM.
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
     </div>
 
     <!-- FOOTER -->

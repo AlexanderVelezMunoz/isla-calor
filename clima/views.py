@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
-
+import requests
+from bs4 import BeautifulSoup
 from scipy.spatial import cKDTree
 from shapely.vectorized import contains
 
@@ -19,7 +20,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout, login
-
+from rest_framework import viewsets
+from .models import Estacion, RegistroClimatico
+from .serializers import EstacionSerializer, RegistroClimaticoSerializer
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from matplotlib.patches import Patch
@@ -29,7 +32,7 @@ import contextily as ctx
 
 from .models import RegistroClimatico, Estacion
 from .utils import generar_reporte_pdf, generar_excel
-
+from .siata_api import buscar_meteorologia
 plt.rcParams['font.family'] = 'DejaVu Sans'
 
 
@@ -142,7 +145,52 @@ def generar_mapa(request):
     anio = request.GET.get("anio")
     mes = request.GET.get("mes")
     comuna = request.GET.get("comuna", "Todas")
+    # =========================================================
+    # BOLETINES IDEAM
+    # =========================================================
 
+    boletines = []
+
+    try:
+        response = requests.get(
+        "https://www.ideam.gov.co/sala-de-prensa/boletines",
+        timeout=10
+            )
+
+        soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+        )
+       
+        enlaces = soup.find_all("a")
+
+        for enlace in enlaces:
+
+                titulo = enlace.get_text(strip=True)
+
+                href = enlace.get("href")
+
+                if (
+                    titulo == "Descargar última publicación"
+                    and href
+                ):
+
+                    boletines.append({
+                        "titulo": href.split("/")[-1].replace("-", " "),
+                        "url": "https://www.ideam.gov.co" + href
+                     })
+
+                    if len(boletines) >= 5:
+                            break
+    except:
+
+        boletines = []
+    print("\n=== BOLETINES IDEAM ===")
+
+    for b in boletines:
+        print(b["titulo"])
+        print(b["url"])
+        print("----------------")
     # =========================================================
     # SELECTOR
     # =========================================================
@@ -152,7 +200,8 @@ def generar_mapa(request):
         return render(request, "selector.html", {
             "anios": anios,
             "meses": meses,
-            "comunas": comunas
+            "comunas": comunas,
+            "boletines": boletines
         })
 
     anio = int(anio)
@@ -197,7 +246,8 @@ def generar_mapa(request):
             "anio_seleccionado": anio,
             "mes_seleccionado": mes,
             "comuna_seleccionada": comuna,
-            "error": f"No hay datos para {mes}/{anio}"
+            "error": f"No hay datos para {mes}/{anio}",
+            "boletines": boletines
         })
 
     # =========================================================
@@ -955,3 +1005,11 @@ def registro(request):
         'registration/registro.html',
         {'form': form}
     )
+class EstacionViewSet(viewsets.ModelViewSet):
+    queryset = Estacion.objects.all()
+    serializer_class = EstacionSerializer
+
+
+class RegistroClimaticoViewSet(viewsets.ModelViewSet):
+    queryset = RegistroClimatico.objects.all().order_by('-fecha')
+    serializer_class = RegistroClimaticoSerializer
