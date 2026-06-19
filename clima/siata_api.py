@@ -51,7 +51,7 @@ def buscar_meteorologia():
             params={
                 "q": "Meteorologica",
                 "type": "dataset",
-                "per_page": 20
+                "per_page": 100
             },
             timeout=15
         )
@@ -256,6 +256,51 @@ def obtener_ultima_temperatura(doi):
             "temperatura": float(ultima["t"]),
             "humedad": float(ultima["h"]),
             "presion": float(ultima["pr"])
+        }
+
+    except Exception as e:
+
+        return {
+            "error": str(e)
+        }
+      # =========================================================
+# OBTENER DATOS SIATA
+# =========================================================
+
+def obtener_datos_siata():
+
+    datos = buscar_meteorologia()
+
+    if "error" in datos:
+        return datos
+
+    return datos
+
+
+# =========================================================
+# OBTENER TEMPERATURA ACTUAL DE UNA ESTACIÓN
+# =========================================================
+
+def obtener_temperatura_estacion(doi):
+
+    try:
+
+        id_archivo = obtener_ultimo_archivo(doi)
+
+        if isinstance(id_archivo, dict):
+            return id_archivo
+
+        df = leer_datos_estacion(id_archivo)
+
+        if isinstance(df, dict):
+            return df
+
+        ultima = df.iloc[-1]
+
+        return {
+            "codigo": int(ultima["codigo"]),
+            "fecha_hora": str(ultima["fecha_hora"]),
+            "temperatura": float(ultima["t"])
         }
 
     except Exception as e:

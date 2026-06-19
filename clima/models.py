@@ -3,6 +3,11 @@ from django.db import models
 class Estacion(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=100)
+    doi = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
     latitud = models.FloatField()
     longitud = models.FloatField()
     comuna = models.CharField(max_length=100, blank=True, null=True)

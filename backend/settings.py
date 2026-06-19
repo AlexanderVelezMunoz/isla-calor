@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-<tu-clave-aqui>'
 
 # Solo para desarrollo: True
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "localhost",

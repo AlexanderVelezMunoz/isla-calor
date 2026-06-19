@@ -11,10 +11,13 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import requests
+from django.core.cache import cache
 from bs4 import BeautifulSoup
 from scipy.spatial import cKDTree
 from shapely.vectorized import contains
-
+from django.http import JsonResponse
+from clima.siata_api import obtener_temperatura_estacion
+from .siata_api import obtener_ultima_temperatura
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
@@ -46,7 +49,31 @@ def logout_view(request):
 
     return redirect('login')
 
+from django.core.cache import cache
 
+def get_temp_siata(doi):
+
+    key = f"siata_{doi}"
+
+    data = cache.get(key)
+
+    if data:
+        return data
+
+    try:
+        respuesta = obtener_ultima_temperatura(doi)
+
+        if isinstance(respuesta, dict):
+            temp = respuesta.get("temperatura")
+        else:
+            temp = None
+
+        cache.set(key, temp, timeout=300)  # 5 minutos
+
+        return temp
+
+    except:
+        return None
 # =========================================================
 # MAPA PRINCIPAL
 # =========================================================
@@ -224,14 +251,74 @@ def generar_mapa(request):
 
     for r in registros_mes:
 
+        temp = None
+
+        try:
+            respuesta = get_temp_siata(r.estacion.doi)
+            print("SIATA DEBUG:", r.estacion.nombre, temp)
+            if isinstance(respuesta, dict):
+                temp = respuesta.get("temperatura")
+            elif isinstance(respuesta, (int, float)):
+                temp = respuesta
+
+        except:
+            temp = None
+
+        if temp is None:
+            temp = r.temperatura
+
+        if temp is None:
+            continue
+
         datos.append({
             "Estacion": r.estacion.nombre,
             "Long": r.estacion.longitud,
             "Lat": r.estacion.latitud,
-            "Valor": r.temperatura
+            "Valor": float(temp)
         })
 
     df_mes = pd.DataFrame(datos)
+    # =========================================================
+    # HISTÓRICO DEL MISMO MES
+    # =========================================================
+
+    registros_historicos = RegistroClimatico.objects.filter(
+    fecha__month=mes
+    )
+
+    historicos = []
+
+    for r in registros_historicos:
+        historicos.append({
+        "Estacion": r.estacion.nombre,
+        "ValorHistorico": r.temperatura
+        })
+
+    df_historico = pd.DataFrame(historicos)
+
+    # promedio histórico por estación
+    df_historico = (
+    df_historico
+    .groupby("Estacion")
+    .mean()
+    .reset_index()
+    )
+    # unir con las temperaturas actuales
+
+    df_mes = df_mes.merge(
+    df_historico,
+    on="Estacion",
+    how="left"
+    )
+    # =========================================================
+    # TEMPERATURA HÍBRIDA
+    # =========================================================
+
+    df_mes["ValorHibrido"] = (
+    0.7 * df_mes["Valor"]
+    +
+    0.3 * df_mes["ValorHistorico"]
+    )
 
     # =========================================================
     # VALIDAR
@@ -263,9 +350,9 @@ def generar_mapa(request):
     # ESTADÍSTICAS
     # =========================================================
 
-    temp_max = round(df_mes["Valor"].max(), 1)
-    temp_min = round(df_mes["Valor"].min(), 1)
-    temp_prom = round(df_mes["Valor"].mean(), 1)
+    temp_max = round(df_mes["ValorHibrido"].max(),1)
+    temp_min = round(df_mes["ValorHibrido"].min(),1)
+    temp_prom = round(df_mes["ValorHibrido"].mean(),1)
 
     # =========================================================
     # VALIDAR ESTACIONES
@@ -440,7 +527,7 @@ def generar_mapa(request):
             for geom in df_mes_proj.geometry
         ])
 
-        valores = df_mes_proj["Valor"].values
+        valores = df_mes_proj["ValorHibrido"].values
 
         grid_points = np.vstack(
             (xi.flatten(), yi.flatten())
@@ -752,35 +839,35 @@ def generar_mapa(request):
     # =========================================================
 
     info = f"""
-ANÁLISIS TÉRMICO
+    ANÁLISIS TÉRMICO
 
-Temperatura máxima:
-{temp_max} °C
+    Temperatura máxima:
+    {temp_max} °C
 
-Temperatura mínima:
-{temp_min} °C
+    Temperatura mínima:
+    {temp_min} °C
 
-Temperatura promedio:
-{temp_prom} °C
+    Temperatura promedio:
+    {temp_prom} °C
 
-Estaciones utilizadas:
-{cantidad_estaciones}
+    Estaciones utilizadas:
+    {cantidad_estaciones}
 
-Confiabilidad espacial:
-{nivel_confianza}
+    Confiabilidad espacial:
+    {nivel_confianza}
 
-Método:
-IDW
+    Método:
+    IDW
 
-Potencia IDW:
-{p if hacer_interpolacion else 'N/A'}
+    Potencia IDW:
+    {p if hacer_interpolacion else 'N/A'}
 
-Resolución:
-{res if hacer_interpolacion else 'N/A'} x {res if hacer_interpolacion else 'N/A'}
+    Resolución:
+    {res if hacer_interpolacion else 'N/A'} x {res if hacer_interpolacion else 'N/A'}
 
-Observación:
-{observacion}
-"""
+    Observación:
+    {observacion}
+    """
 
     ax_leg.text(
         0.02,
@@ -919,7 +1006,7 @@ Observación:
 
     fig.savefig(
         output_path,
-        dpi=180,
+        dpi=120,
         bbox_inches='tight',
         facecolor='white'
     )
@@ -1013,3 +1100,32 @@ class EstacionViewSet(viewsets.ModelViewSet):
 class RegistroClimaticoViewSet(viewsets.ModelViewSet):
     queryset = RegistroClimatico.objects.all().order_by('-fecha')
     serializer_class = RegistroClimaticoSerializer
+    
+
+
+import requests
+from django.http import JsonResponse
+
+BASE = "https://datos.siata.gov.co/api/v1"
+
+def obtener_doi_temperatura():
+    url = f"{BASE}/search"
+    params = {
+        "q": "*",
+        "subtree": "Meteorologica",
+        "type": "dataset",
+        "per_page": 5
+    }
+
+    r = requests.get(url, params=params)
+    r.raise_for_status()
+
+    items = r.json()["data"]["items"]
+
+    if not items:
+        return None
+
+    # ejemplo: tomar el primero
+    return items[0]["global_id"]
+
+
