@@ -628,6 +628,56 @@
 
         </div>
 
+            <div class="panel">
+
+        <h2 style="margin-bottom:20px;">
+            Ficha Técnica de los Datos
+        </h2>
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+        ">
+
+            <tr>
+                <td><b>Fuente histórica</b></td>
+                <td>Base de datos climática local</td>
+            </tr>
+
+            <tr>
+                <td><b>Fuente tiempo real</b></td>
+                <td>API SIATA mediante DOI</td>
+            </tr>
+
+            <tr>
+                <td><b>Variable analizada</b></td>
+                <td>Temperatura (°C)</td>
+            </tr>
+
+            <tr>
+                <td><b>Método de interpolación</b></td>
+                <td>IDW (Inverse Distance Weighting)</td>
+            </tr>
+
+            <tr>
+                <td><b>Estaciones utilizadas</b></td>
+                <td>{{ cantidad_estaciones }}</td>
+            </tr>
+
+            <tr>
+                <td><b>Confiabilidad espacial</b></td>
+                <td>{{ nivel_confianza }}</td>
+            </tr>
+
+            <tr>
+                <td><b>Observación</b></td>
+                <td>{{ observacion }}</td>
+            </tr>
+
+        </table>
+
+    </div>
+
         <!-- ===================================================== -->
         <!-- INFORMACIÓN -->
         <!-- ===================================================== -->
@@ -652,14 +702,15 @@
             <div class="card">
 
                 <h3>
-                    Procesamiento geoespacial
+                    Integración SIATA
                 </h3>
 
                 <p>
-                    El análisis espacial es realizado mediante
-                    Django, GeoPandas, NumPy y SciPy,
-                    integrando procesamiento SIG
-                    y visualización cartográfica.
+                    El sistema consulta información
+                    meteorológica mediante DOI de estaciones
+                    SIATA, permitiendo complementar los datos
+                    históricos con observaciones recientes
+                    para mejorar el análisis climático.
                 </p>
 
             </div>

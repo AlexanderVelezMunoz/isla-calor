@@ -254,8 +254,8 @@ def generar_mapa(request):
         temp = None
 
         try:
-            respuesta = get_temp_siata(r.estacion.doi)
-            print("SIATA DEBUG:", r.estacion.nombre, temp)
+            respuesta = obtener_ultima_temperatura(r.estacion.doi)
+            
             if isinstance(respuesta, dict):
                 temp = respuesta.get("temperatura")
             elif isinstance(respuesta, (int, float)):
@@ -1127,5 +1127,4 @@ def obtener_doi_temperatura():
 
     # ejemplo: tomar el primero
     return items[0]["global_id"]
-
 
