@@ -1,28 +1,18 @@
 from django.contrib import admin
 from django.urls import path, include
-
-from django.conf import settings
-from django.conf.urls.static import static
-
 from django.contrib.auth import views as auth_views
+from django.shortcuts import redirect
+
+def home(request):
+    return redirect('login')
 
 urlpatterns = [
 
     path('admin/', admin.site.urls),
 
-    path(
-        'login/',
-        auth_views.LoginView.as_view(),
-        name='login'
-    ),
+    path('', home),  # raíz redirige al login
+
+    path('login/', auth_views.LoginView.as_view(), name='login'),
 
     path('', include('clima.urls')),
-
 ]
-
-if settings.DEBUG:
-
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
-    )

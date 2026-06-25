@@ -119,3 +119,4 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # Redirección después del login
 LOGIN_REDIRECT_URL = '/mapa_idw/'  # o la página principal de tu sistema
 LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
