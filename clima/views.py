@@ -19,6 +19,7 @@ from django.http import JsonResponse
 from clima.siata_api import obtener_temperatura_estacion
 from .siata_api import obtener_ultima_temperatura
 from django.conf import settings
+from rasterio.transform import from_origin
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
@@ -30,11 +31,11 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
-
+from .utils import generar_geotiff
 import contextily as ctx
 
 from .models import RegistroClimatico, Estacion
-from .utils import generar_reporte_pdf, generar_excel
+from .utils import generar_reporte_pdf, generar_excel, generar_geotiff
 from .siata_api import buscar_meteorologia
 plt.rcParams['font.family'] = 'DejaVu Sans'
 
@@ -278,6 +279,7 @@ def generar_mapa(request):
         })
 
     df_mes = pd.DataFrame(datos)
+    fuente_datos = "Arquitectura híbrida: SIATA y registros históricos"
     # =========================================================
     # HISTÓRICO DEL MISMO MES
     # =========================================================
@@ -557,7 +559,7 @@ def generar_mapa(request):
         )
 
         zi = zi.reshape(xi.shape)
-
+        
         # =========================================================
         # ÁREA URBANA
         # =========================================================
@@ -596,6 +598,20 @@ def generar_mapa(request):
         )
 
         zi_mask = np.where(mask, zi, np.nan)
+        geotiff_path = os.path.join(
+            settings.MEDIA_ROOT,
+            "temperatura_idw.tif"
+        )
+
+        pixel_size = (xmax - xmin) / res
+
+        generar_geotiff(
+            zi_mask,
+            geotiff_path,
+            xmin,
+            ymax,
+            pixel_size
+        )
 
         # =========================================================
         # RECORTE VISUAL POR COMUNA
@@ -1013,8 +1029,10 @@ def generar_mapa(request):
 
     plt.close(fig)
 
+    
+
     # =========================================================
-    # PDF Y EXCEL
+    # PDF Y EXCEL y GEOTIFF
     # =========================================================
 
     generar_reporte_pdf(
@@ -1025,6 +1043,8 @@ def generar_mapa(request):
     )
 
     generar_excel(df_mes)
+
+    fuente_datos = "IDEAM (2013-2024) + SIATA (tiempo real) + Base local"
 
     return render(request, "mapa_idw.html", {
 
@@ -1038,6 +1058,8 @@ def generar_mapa(request):
         "excel_url":
             settings.MEDIA_URL +
             "reporte_temperatura.xlsx",
+
+        "tif_url": settings.MEDIA_URL + "temperatura_idw.tif",
 
         "anio": anio,
 
@@ -1061,7 +1083,9 @@ def generar_mapa(request):
 
         "nivel_confianza": nivel_confianza,
 
-        "observacion": observacion
+        "observacion": observacion,
+
+        "fuente_datos": fuente_datos,
     })
 
 
@@ -1128,3 +1152,17 @@ def obtener_doi_temperatura():
     # ejemplo: tomar el primero
     return items[0]["global_id"]
 
+# =========================================================
+# PÁGINAS INFORMATIVAS
+# =========================================================
+
+def acerca(request):
+    return render(request, "acerca.html")
+
+
+def metodologia(request):
+    return render(request, "metodologia.html")
+
+
+def fuentes(request):
+    return render(request, "fuentes.html")

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Fuentes de datos{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <h1>Fuentes de datos</h1>
+</div>
+
+<div class="card">
+    <h2>SIATA</h2>
+    <p>
+        Sistema de Alerta Temprana del Valle de Aburrá.
+        Provee datos meteorológicos en tiempo real mediante API pública.
+    </p>
+</div>
+
+<div class="card">
+    <h2>IDEAM</h2>
+    <p>
+        Instituto de Hidrología, Meteorología y Estudios Ambientales de Colombia.
+        Fuente oficial de datos climáticos nacionales.
+    </p>
+</div>
+
+<div class="card">
+    <h2>Base de datos local</h2>
+    <p>
+        Dataset histórico de temperatura superficial urbana (2013–2024)
+        construido para análisis de isla de calor en Medellín.
+    </p>
+</div>
+
+{% endblock %}

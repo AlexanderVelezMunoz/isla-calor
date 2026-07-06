@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Acerca del sistema{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <h1>Sistema Web SIG de Isla de Calor Urbana Superficial</h1>
+
+    <p>
+        Proyecto de investigación desarrollado en el Tecnológico de Antioquia
+        para el análisis espacial de temperatura superficial urbana en Medellín.
+    </p>
+</div>
+
+<div class="card">
+    <h2>Arquitectura híbrida</h2>
+
+    <ul>
+        <li>Base histórica local 2013-2024.</li>
+        <li>Integración en tiempo real mediante SIATA.</li>
+        <li>Información complementaria IDEAM.</li>
+        <li>Interpolación espacial IDW.</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>Tecnologías</h2>
+
+    <ul>
+        <li>Django 5</li>
+        <li>Python</li>
+        <li>Pandas</li>
+        <li>NumPy</li>
+        <li>SciPy</li>
+        <li>GeoPandas</li>
+        <li>Matplotlib</li>
+        <li>Django REST Framework</li>
+    </ul>
+</div>
+
+{% endblock %}

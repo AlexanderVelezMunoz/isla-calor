@@ -11,7 +11,9 @@ urlpatterns = [
     path('mapa_idw/', views.generar_mapa, name='generar_mapa'),
     path('registro/', views.registro, name='registro'),
     path('logout/', views.logout_view, name='logout'),
-
+    path('acerca/', views.acerca, name='acerca'),
+    path('metodologia/', views.metodologia, name='metodologia'),
+    path('fuentes/', views.fuentes, name='fuentes'),
     path('api/', include(router.urls)),
     
 ]

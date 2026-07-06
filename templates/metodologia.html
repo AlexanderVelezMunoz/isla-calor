@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Metodología{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <h1>Metodología del sistema</h1>
+    <p>
+        El sistema SIG de isla de calor urbana se desarrolla bajo un enfoque híbrido
+        que integra datos históricos, datos en tiempo real y análisis espacial.
+    </p>
+</div>
+
+<div class="card">
+    <h2>1. Recolección de datos</h2>
+    <ul>
+        <li>Base histórica 2013–2024</li>
+        <li>API SIATA (datos meteorológicos en tiempo real)</li>
+        <li>Fuentes complementarias IDEAM</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>2. Procesamiento</h2>
+    <p>
+        Se utilizan librerías como Pandas y NumPy para limpieza,
+        normalización y estructuración de datos climáticos.
+    </p>
+</div>
+
+<div class="card">
+    <h2>3. Interpolación espacial (IDW)</h2>
+    <p>
+        Se aplica el método Inverse Distance Weighting para estimar
+        la distribución espacial de la temperatura superficial.
+    </p>
+</div>
+
+<div class="card">
+    <h2>4. Visualización</h2>
+    <p>
+        Los resultados se representan en mapas generados dentro del sistema SIG web.
+    </p>
+</div>
+
+{% endblock %}

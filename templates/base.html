@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Sistema SIG Isla de Calor{% endblock %}</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f2f2f2;
+        }
+
+        header {
+            background: #1f4e79;
+            color: white;
+            padding: 15px;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>Sistema Web SIG - Isla de Calor Urbana</h2>
+
+    <nav>
+        <a href="/acerca/">Acerca</a>
+        <a href="/metodologia/">Metodología</a>
+        <a href="/fuentes/">Fuentes</a>
+        <a href="/mapa_idw/">Mapa</a>
+    </nav>
+</header>
+
+<div class="container">
+
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+<footer>
+    Proyecto académico - Tecnológico de Antioquia
+</footer>
+
+</body>
+</html>

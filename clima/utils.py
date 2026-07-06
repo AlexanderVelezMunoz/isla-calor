@@ -1,8 +1,9 @@
 import os
 import pandas as pd
-
+import rasterio
+import numpy as np
 from django.conf import settings
-
+from rasterio.transform import from_origin
 from reportlab.lib.pagesizes import letter
 
 from reportlab.platypus import (
@@ -111,3 +112,35 @@ def generar_excel(df_mes):
     )
 
     return output_excel
+# ==========================================
+# Geotiff
+# ==========================================
+
+def generar_geotiff(array, path, xmin, ymax, pixel_size):
+
+    transform = from_origin(
+        xmin,
+        ymax,
+        pixel_size,
+        pixel_size
+    )
+
+    with rasterio.open(
+        path,
+        'w',
+        driver='GTiff',
+        height=array.shape[0],
+        width=array.shape[1],
+        count=1,
+        dtype='float32',
+        crs='EPSG:3857',
+        transform=transform,
+        nodata=np.nan,
+    ) as dst:
+
+        dst.write(
+            array.astype('float32'),
+            1
+        )
+
+    return path
