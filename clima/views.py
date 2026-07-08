@@ -605,13 +605,13 @@ def generar_mapa(request):
 
         pixel_size = (xmax - xmin) / res
 
-        generar_geotiff(
-            zi_mask,
-            geotiff_path,
-            xmin,
-            ymax,
-            pixel_size
-        )
+        # generar_geotiff(
+          #  zi_mask,
+          #  geotiff_path,
+           # xmin,
+          #  ymax,
+          #  pixel_size
+        #)
 
         # =========================================================
         # RECORTE VISUAL POR COMUNA
