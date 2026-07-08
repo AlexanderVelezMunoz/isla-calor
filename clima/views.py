@@ -253,11 +253,12 @@ def generar_mapa(request):
 
     for r in registros_mes:
 
-        temp = obtener_temperatura_cache(
-        r.estacion.doi
-        )
+        if anio >= 2026 :
 
-        if temp is None:
+            temp = obtener_temperatura_cache(
+                r.estacion.doi
+            )
+        else:
             temp = r.temperatura
 
         if temp is None:
