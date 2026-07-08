@@ -37,6 +37,7 @@ import contextily as ctx
 from .models import RegistroClimatico, Estacion
 from .utils import generar_reporte_pdf, generar_excel, generar_geotiff
 from .siata_api import buscar_meteorologia
+from .services.siata import obtener_temperatura_cache
 plt.rcParams['font.family'] = 'DejaVu Sans'
 
 
@@ -252,7 +253,9 @@ def generar_mapa(request):
 
     for r in registros_mes:
 
-        temp = r.temperatura
+        temp = obtener_temperatura_cache(
+        r.estacion.doi
+        )
 
         if temp is None:
             temp = r.temperatura

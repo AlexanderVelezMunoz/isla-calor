@@ -41,3 +41,45 @@ def guardar_datos_siata(df):
             precipitacion=p1,   # aquí decides tu lógica
             calidad=calidad
         )
+
+        # =========================================================
+# TEMPERATURA SIATA CON CACHE
+# =========================================================
+
+from django.core.cache import cache
+from clima.siata_api import obtener_ultima_temperatura
+
+
+def obtener_temperatura_cache(doi):
+
+    if not doi:
+        return None
+
+    clave = f"temperatura_siata_{doi}"
+
+    temperatura = cache.get(clave)
+
+    if temperatura is not None:
+        return temperatura
+
+    try:
+
+        respuesta = obtener_ultima_temperatura(doi)
+
+        if isinstance(respuesta, dict):
+
+            temperatura = respuesta.get("temperatura")
+
+            cache.set(
+                clave,
+                temperatura,
+                timeout=300
+            )
+
+            return temperatura
+
+    except Exception:
+
+        return None
+
+    return None
