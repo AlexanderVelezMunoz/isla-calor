@@ -252,18 +252,7 @@ def generar_mapa(request):
 
     for r in registros_mes:
 
-        temp = None
-
-        try:
-            respuesta = obtener_ultima_temperatura(r.estacion.doi)
-            
-            if isinstance(respuesta, dict):
-                temp = respuesta.get("temperatura")
-            elif isinstance(respuesta, (int, float)):
-                temp = respuesta
-
-        except:
-            temp = None
+        temp = r.temperatura
 
         if temp is None:
             temp = r.temperatura
@@ -605,13 +594,13 @@ def generar_mapa(request):
 
         pixel_size = (xmax - xmin) / res
 
-        # generar_geotiff(
-          #  zi_mask,
-          #  geotiff_path,
-           # xmin,
-          #  ymax,
-          #  pixel_size
-        #)
+        generar_geotiff(
+            zi_mask,
+            geotiff_path,
+            xmin,
+            ymax,
+            pixel_size
+        )
 
         # =========================================================
         # RECORTE VISUAL POR COMUNA
@@ -1022,7 +1011,7 @@ def generar_mapa(request):
 
     fig.savefig(
         output_path,
-        dpi=120,
+        dpi=80,
         bbox_inches='tight',
         facecolor='white'
     )
